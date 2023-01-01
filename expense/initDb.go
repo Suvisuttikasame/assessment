@@ -8,13 +8,13 @@ import (
 	_ "github.com/lib/pq"
 )
 
-var db *sql.DB
+var Db *sql.DB
 
 func InitDb() {
 	var err error
-	db, err = sql.Open("postgres", os.Getenv("DATABASE_URL"))
+	Db, err = sql.Open("postgres", os.Getenv("DATABASE_URL"))
 	if err != nil {
-		log.Fatal("db connection error", err)
+		log.Fatal("Db connection error", err)
 	}
 
 	createTb := `CREATE TABLE IF NOT EXISTS expenses(
@@ -24,7 +24,7 @@ func InitDb() {
 					NOTE TEXT,
 					TAGS TEXT[])`
 
-	_, err = db.Exec(createTb)
+	_, err = Db.Exec(createTb)
 
 	if err != nil {
 		log.Fatal("can not create table expense", err)
