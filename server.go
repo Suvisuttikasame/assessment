@@ -17,7 +17,8 @@ func main() {
 	e := echo.New()
 
 	e.POST("/expenses", expense.CreateExpenses)
-	fmt.Println("Please use server.go for main file")
-	fmt.Println("start at port:", os.Getenv("PORT"))
+	// fmt.Println("Please use server.go for main file")
+	// fmt.Println("start at port:", os.Getenv("PORT"))
+	fmt.Println("server is running on port:", os.Getenv("PORT"))
 	log.Fatal(e.Start(":" + os.Getenv("PORT")))
 }
