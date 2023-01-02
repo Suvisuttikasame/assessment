@@ -25,7 +25,7 @@ func TestAuthentication(t *testing.T) {
 		req.Header.Set(echo.HeaderAuthorization, auth)
 		err := h(c)
 
-		assert.NoError(t, err)
+		assert.Nil(t, err)
 	})
 
 	t.Run("should return ", func(t *testing.T) {
