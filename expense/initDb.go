@@ -10,9 +10,15 @@ import (
 
 var Db *sql.DB
 
-func InitDb() {
+func InitDb(url string) {
+	var pqC string
+	if url == "" {
+		pqC = os.Getenv("DATABASE_URL")
+	} else {
+		pqC = url
+	}
 	var err error
-	Db, err = sql.Open("postgres", os.Getenv("DATABASE_URL"))
+	Db, err = sql.Open("postgres", pqC)
 	if err != nil {
 		log.Fatal("Db connection error", err)
 	}

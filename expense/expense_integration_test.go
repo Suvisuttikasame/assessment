@@ -4,14 +4,36 @@ package expense
 
 import (
 	"bytes"
+	"context"
+	"net"
 	"net/http"
 	"strconv"
 	"testing"
+	"time"
 
+	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestCreateExpenses(t *testing.T) {
+	eh := echo.New()
+	go func(e *echo.Echo) {
+		InitDb("postgres://pcfxcojb:klhxSm6mVTqPkH1OZB9GWSASMEkMguZG@tiny.db.elephantsql.com/pcfxcojb")
+
+		e.POST("/expenses", CreateExpenses)
+		e.Start(":2565")
+	}(eh)
+	for {
+		conn, err := net.DialTimeout("tcp", "localhost:2565", 30*time.Second)
+		if err != nil {
+			// log.Println(err)
+		}
+		if conn != nil {
+			conn.Close()
+			break
+		}
+	}
+
 	//arrange
 	reqBody := bytes.NewBufferString(`{
 		"title": "buy a new phone",
@@ -33,9 +55,32 @@ func TestCreateExpenses(t *testing.T) {
 	assert.Equal(t, float32(39000), ex.Amount)
 	assert.Equal(t, "buy a new phone", ex.Note)
 	assert.Equal(t, []string{"gadget", "shopping"}, ex.Tags)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	err = eh.Shutdown(ctx)
+	assert.NoError(t, err)
 }
 
 func TestGetExpensesById(t *testing.T) {
+	eh := echo.New()
+	go func(e *echo.Echo) {
+		InitDb("postgres://pcfxcojb:klhxSm6mVTqPkH1OZB9GWSASMEkMguZG@tiny.db.elephantsql.com/pcfxcojb")
+
+		e.GET("/expenses/:id", GetExpensesById)
+		e.POST("/expenses", CreateExpenses)
+		e.Start(":2565")
+	}(eh)
+	for {
+		conn, err := net.DialTimeout("tcp", "localhost:2565", 30*time.Second)
+		if err != nil {
+			// log.Println(err)
+		}
+		if conn != nil {
+			conn.Close()
+			break
+		}
+	}
 
 	t.Run("should return the same as input when input is valid", func(t *testing.T) {
 		//arrange
@@ -46,10 +91,12 @@ func TestGetExpensesById(t *testing.T) {
 			"tags": ["beverage"]
 		}`)
 		id := m.Id
+		t.Log(id)
 		ex := Expense{}
 
 		//action
 		res := request(http.MethodGet, "http://localhost:2565/expenses/"+strconv.Itoa(id), nil)
+		t.Log(res)
 		err := res.Decode(&ex)
 
 		//assert
@@ -79,9 +126,32 @@ func TestGetExpensesById(t *testing.T) {
 
 	})
 
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	err := eh.Shutdown(ctx)
+	assert.NoError(t, err)
 }
 
 func TestUpdateExpensesById(t *testing.T) {
+	eh := echo.New()
+	go func(e *echo.Echo) {
+		InitDb("postgres://pcfxcojb:klhxSm6mVTqPkH1OZB9GWSASMEkMguZG@tiny.db.elephantsql.com/pcfxcojb")
+
+		e.PUT("/expenses/:id", UpdateExpensesById)
+		e.POST("/expenses", CreateExpenses)
+		e.Start(":2565")
+	}(eh)
+	for {
+		conn, err := net.DialTimeout("tcp", "localhost:2565", 30*time.Second)
+		if err != nil {
+			// log.Println(err)
+		}
+		if conn != nil {
+			conn.Close()
+			break
+		}
+	}
+
 	m := SeedExpense(t, `{
 		"title": "apple smoothie",
 		"amount": 89,
@@ -107,9 +177,33 @@ func TestUpdateExpensesById(t *testing.T) {
 	assert.Equal(t, float32(39000), ex.Amount)
 	assert.Equal(t, "buy a new phone", ex.Note)
 	assert.Equal(t, []string{"gadget", "shopping"}, ex.Tags)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	err = eh.Shutdown(ctx)
+	assert.NoError(t, err)
 }
 
 func TestGetExpenses(t *testing.T) {
+	eh := echo.New()
+	go func(e *echo.Echo) {
+		InitDb("postgres://pcfxcojb:klhxSm6mVTqPkH1OZB9GWSASMEkMguZG@tiny.db.elephantsql.com/pcfxcojb")
+
+		e.GET("/expenses", GetExpenses)
+		e.POST("/expenses", CreateExpenses)
+		e.Start(":2565")
+	}(eh)
+	for {
+		conn, err := net.DialTimeout("tcp", "localhost:2565", 30*time.Second)
+		if err != nil {
+			// log.Println(err)
+		}
+		if conn != nil {
+			conn.Close()
+			break
+		}
+	}
+
 	_ = SeedExpense(t, `{
 		"title": "apple smoothie",
 		"amount": 89,
@@ -124,4 +218,9 @@ func TestGetExpenses(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, http.StatusOK, res.StatusCode)
 	assert.NotEqual(t, 0, len(exs))
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	err = eh.Shutdown(ctx)
+	assert.NoError(t, err)
 }
