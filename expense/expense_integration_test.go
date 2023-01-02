@@ -81,16 +81,30 @@ func TestGetExpensesById(t *testing.T) {
 
 }
 
-func SeedExpense(t *testing.T, body string) Expense {
-	reqBody := bytes.NewBufferString(body)
-
+func TestUpdateExpensesById(t *testing.T) {
+	m := SeedExpense(t, `{
+		"title": "apple smoothie",
+		"amount": 89,
+		"note": "no discount",
+		"tags": ["beverage"]
+	}`)
+	id := m.Id
+	reqBody := bytes.NewBufferString(`{
+		"title": "buy a new phone",
+		"amount": 39000,
+		"note": "buy a new phone",
+		"tags": ["gadget", "shopping"]
+	}`)
 	ex := Expense{}
 
-	res := request(http.MethodPost, "http://localhost:2565/expenses", reqBody)
+	res := request(http.MethodPut, "http://localhost:2565/expenses/"+strconv.Itoa(id), reqBody)
 	err := res.Decode(&ex)
 
-	if err != nil {
-		t.Fatal("unaa\ble to seed demo data.", err.Error())
-	}
-	return ex
+	assert.Nil(t, err)
+	assert.Equal(t, http.StatusOK, res.StatusCode)
+	assert.Equal(t, ex.Id, id)
+	assert.Equal(t, "buy a new phone", ex.Title)
+	assert.Equal(t, float32(39000), ex.Amount)
+	assert.Equal(t, "buy a new phone", ex.Note)
+	assert.Equal(t, []string{"gadget", "shopping"}, ex.Tags)
 }
