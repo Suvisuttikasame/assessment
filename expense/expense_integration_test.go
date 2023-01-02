@@ -5,6 +5,7 @@ package expense
 import (
 	"bytes"
 	"net/http"
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -32,4 +33,64 @@ func TestCreateExpenses(t *testing.T) {
 	assert.Equal(t, float32(39000), ex.Amount)
 	assert.Equal(t, "buy a new phone", ex.Note)
 	assert.Equal(t, []string{"gadget", "shopping"}, ex.Tags)
+}
+
+func TestGetExpensesById(t *testing.T) {
+
+	t.Run("should return the same as input when input is valid", func(t *testing.T) {
+		//arrange
+		m := SeedExpense(t, `{
+			"title": "apple smoothie",
+			"amount": 89,
+			"note": "no discount",
+			"tags": ["beverage"]
+		}`)
+		id := m.Id
+		ex := Expense{}
+
+		//action
+		res := request(http.MethodGet, "http://localhost:2565/expenses/"+strconv.Itoa(id), nil)
+		err := res.Decode(&ex)
+
+		//assert
+		assert.Nil(t, err)
+		assert.Equal(t, http.StatusOK, res.StatusCode)
+		assert.Equal(t, id, ex.Id)
+		assert.Equal(t, "apple smoothie", ex.Title)
+		assert.Equal(t, float32(89), ex.Amount)
+		assert.Equal(t, "no discount", ex.Note)
+		assert.Equal(t, []string{"beverage"}, ex.Tags)
+
+	})
+
+	t.Run("should return expense's not found when input param is 999999999", func(t *testing.T) {
+		//arrange
+		id := 999999999
+		ex := Err{}
+
+		//action
+		res := request(http.MethodGet, "http://localhost:2565/expenses/"+strconv.Itoa(id), nil)
+		err := res.Decode(&ex)
+
+		//assert
+		assert.Nil(t, err)
+		assert.Equal(t, http.StatusNotFound, res.StatusCode)
+		assert.Equal(t, "expense's not found", ex.Message)
+
+	})
+
+}
+
+func SeedExpense(t *testing.T, body string) Expense {
+	reqBody := bytes.NewBufferString(body)
+
+	ex := Expense{}
+
+	res := request(http.MethodPost, "http://localhost:2565/expenses", reqBody)
+	err := res.Decode(&ex)
+
+	if err != nil {
+		t.Fatal("unaa\ble to seed demo data.", err.Error())
+	}
+	return ex
 }
