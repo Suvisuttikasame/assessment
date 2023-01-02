@@ -6,6 +6,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -72,6 +73,103 @@ func TestCreateExpensesValidation(t *testing.T) {
 		assert.Equal(t, "tags error : this field should have at least 1.", e.Message)
 	})
 
+}
+
+func TestUpdateExpensesByIdValidation(t *testing.T) {
+	t.Run("should return title error : this field should not empty. when title input is empty", func(t *testing.T) {
+		//arrange
+		i := SeedExpense(t, `{
+			"title": "buy a new phone",
+			"amount": 39000,
+			"note": "buy a new phone",
+			"tags": ["gadget", "shopping"]
+		}`)
+		id := i.Id
+		reqBody := bytes.NewBufferString(`{
+			"title": "",
+			"amount": 39000,
+			"note": "buy a new phone",
+			"tags": ["gadget", "shopping"]
+		}`)
+		var e Err
+
+		//action
+		res := request(http.MethodPut, "http://localhost:2565/expenses/"+strconv.Itoa(id), reqBody)
+		err := res.Decode(&e)
+
+		//assert
+		assert.Nil(t, err)
+		assert.Equal(t, http.StatusBadRequest, res.StatusCode)
+		assert.Equal(t, "title error : this field should not empty.", e.Message)
+	})
+
+	t.Run("should return amount error : this field should not less than 0. when amount input is minus value", func(t *testing.T) {
+		//arrange
+		i := SeedExpense(t, `{
+			"title": "buy a new phone",
+			"amount": 39000,
+			"note": "buy a new phone",
+			"tags": ["gadget", "shopping"]
+		}`)
+		id := i.Id
+		reqBody := bytes.NewBufferString(`{
+			"title": "buy a new phone",
+			"amount": -199,
+			"note": "buy a new phone",
+			"tags": ["gadget", "shopping"]
+		}`)
+		var e Err
+
+		//action
+		res := request(http.MethodPut, "http://localhost:2565/expenses/"+strconv.Itoa(id), reqBody)
+		err := res.Decode(&e)
+
+		//assert
+		assert.Nil(t, err)
+		assert.Equal(t, http.StatusBadRequest, res.StatusCode)
+		assert.Equal(t, "amount error : this field should not less than 0.", e.Message)
+	})
+
+	t.Run("should return tags error : this field should have at least 1. when tags input is empty", func(t *testing.T) {
+		//arrange
+		i := SeedExpense(t, `{
+			"title": "buy a new phone",
+			"amount": 39000,
+			"note": "buy a new phone",
+			"tags": ["gadget", "shopping"]
+		}`)
+		id := i.Id
+		reqBody := bytes.NewBufferString(`{
+			"title": "buy a new phone",
+			"amount": 39000,
+			"note": "buy a new phone",
+			"tags": []
+		}`)
+		var e Err
+
+		//action
+		res := request(http.MethodPut, "http://localhost:2565/expenses/"+strconv.Itoa(id), reqBody)
+		err := res.Decode(&e)
+
+		//assert
+		assert.Nil(t, err)
+		assert.Equal(t, http.StatusBadRequest, res.StatusCode)
+		assert.Equal(t, "tags error : this field should have at least 1.", e.Message)
+	})
+}
+
+func SeedExpense(t *testing.T, body string) Expense {
+	reqBody := bytes.NewBufferString(body)
+
+	ex := Expense{}
+
+	res := request(http.MethodPost, "http://localhost:2565/expenses", reqBody)
+	err := res.Decode(&ex)
+
+	if err != nil {
+		t.Fatal("unaa\ble to seed demo data.", err.Error())
+	}
+	return ex
 }
 
 type Response struct {
