@@ -108,3 +108,20 @@ func TestUpdateExpensesById(t *testing.T) {
 	assert.Equal(t, "buy a new phone", ex.Note)
 	assert.Equal(t, []string{"gadget", "shopping"}, ex.Tags)
 }
+
+func TestGetExpenses(t *testing.T) {
+	_ = SeedExpense(t, `{
+		"title": "apple smoothie",
+		"amount": 89,
+		"note": "no discount",
+		"tags": ["beverage"]
+	}`)
+	exs := []Expense{}
+
+	res := request(http.MethodGet, "http://localhost:2565/expenses", nil)
+	err := res.Decode(&exs)
+
+	assert.Nil(t, err)
+	assert.Equal(t, http.StatusOK, res.StatusCode)
+	assert.NotEqual(t, 0, len(exs))
+}

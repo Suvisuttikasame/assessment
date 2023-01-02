@@ -26,6 +26,7 @@ func main() {
 	e.Use(middleware.BasicAuth(customMiddleware.Authentication))
 
 	e.POST("/expenses", expense.CreateExpenses)
+	e.GET("/expenses", expense.GetExpenses)
 	e.GET("/expenses/:id", expense.GetExpensesById)
 	e.PUT("/expenses/:id", expense.UpdateExpensesById)
 
