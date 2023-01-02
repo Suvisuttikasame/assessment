@@ -18,7 +18,7 @@ import (
 func main() {
 	fmt.Println("Initiating database ...")
 	//init db connection & create table
-	expense.InitDb()
+	expense.InitDb("")
 	fmt.Println("Successfully initiate database")
 
 	e := echo.New()
