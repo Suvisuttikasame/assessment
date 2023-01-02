@@ -4,9 +4,6 @@ package expense
 
 import (
 	"bytes"
-	"encoding/json"
-	"io"
-	"io/ioutil"
 	"net/http"
 	"testing"
 
@@ -35,28 +32,4 @@ func TestCreateExpenses(t *testing.T) {
 	assert.Equal(t, float32(39000), ex.Amount)
 	assert.Equal(t, "buy a new phone", ex.Note)
 	assert.Equal(t, []string{"gadget", "shopping"}, ex.Tags)
-}
-
-type Response struct {
-	*http.Response
-	err error
-}
-
-func (r *Response) Decode(v interface{}) error {
-	if r.err != nil {
-		return r.err
-	}
-	b, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		return err
-	}
-	return json.Unmarshal(b, v)
-}
-
-func request(method, uri string, body io.Reader) *Response {
-	req, _ := http.NewRequest(method, uri, body)
-	req.Header.Add("Content-Type", "application/json")
-	client := http.Client{}
-	res, err := client.Do(req)
-	return &Response{res, err}
 }
