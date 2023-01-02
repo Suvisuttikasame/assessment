@@ -92,6 +92,7 @@ func (r *Response) Decode(v interface{}) error {
 
 func request(method, uri string, body io.Reader) *Response {
 	req, _ := http.NewRequest(method, uri, body)
+	req.Header.Add("Authorization", "Basic YWRtaW46YWRtaW4=")
 	req.Header.Add("Content-Type", "application/json")
 	client := http.Client{}
 	res, err := client.Do(req)

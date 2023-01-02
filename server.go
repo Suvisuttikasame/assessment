@@ -9,8 +9,10 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/Suvisuttikasame/assessment/customMiddleware"
 	"github.com/Suvisuttikasame/assessment/expense"
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 )
 
 func main() {
@@ -20,6 +22,8 @@ func main() {
 	fmt.Println("Successfully initiate database")
 
 	e := echo.New()
+	e.Use(middleware.Recover())
+	e.Use(middleware.BasicAuth(customMiddleware.Authentication))
 
 	e.POST("/expenses", expense.CreateExpenses)
 
