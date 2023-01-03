@@ -1,4 +1,4 @@
-FROM golang:1.19 as base-simple
+FROM golang:1.19-alpine as base-simple
 
 WORKDIR /usr/src/app
 
@@ -21,6 +21,6 @@ FROM alpine:3.16.2
 
 COPY --from=base-simple /usr/src/app/out/go-app /app/go-app
 
-CMD ["/app/go-multi"]
+CMD ["/app/go-app"]
 
 

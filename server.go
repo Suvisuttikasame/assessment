@@ -18,7 +18,9 @@ import (
 func main() {
 	fmt.Println("Initiating database ...")
 	//init db connection & create table
-	expense.InitDb("")
+	Port := os.Getenv("PORT")
+	Url := os.Getenv("DATABASE_URL")
+	expense.InitDb(Url)
 	fmt.Println("Successfully initiate database")
 
 	e := echo.New()
@@ -32,9 +34,9 @@ func main() {
 
 	// fmt.Println("Please use server.go for main file")
 	// fmt.Println("start at port:", os.Getenv("PORT"))
-	fmt.Println("server is running on port:", os.Getenv("PORT"))
+	fmt.Println("server is running on port:", Port)
 	go func() {
-		fmt.Println(e.Start(":" + os.Getenv("PORT")))
+		fmt.Println(e.Start(":" + Port))
 	}()
 
 	//create buffer to listen to os signal
