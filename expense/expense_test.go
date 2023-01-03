@@ -1,11 +1,10 @@
+//go:build unit
+
 package expense
 
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
-	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -176,45 +175,4 @@ func TestUpdateExpensesByIdValidation(t *testing.T) {
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
 		assert.Equal(t, "tags error : this field should have at least 1.", r.Message)
 	})
-}
-
-func SeedExpense(t *testing.T, body string) Expense {
-	reqBody := bytes.NewBufferString(body)
-	fmt.Println(reqBody)
-
-	ex := Expense{}
-
-	res := request(http.MethodPost, "http://localhost:2565/expenses", reqBody)
-	err := res.Decode(&ex)
-	fmt.Println(ex)
-
-	if err != nil {
-		t.Fatal("unaa\ble to seed demo data.", err.Error())
-	}
-	return ex
-}
-
-type Response struct {
-	*http.Response
-	err error
-}
-
-func (r *Response) Decode(v interface{}) error {
-	if r.err != nil {
-		return r.err
-	}
-	b, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		return err
-	}
-	return json.Unmarshal(b, v)
-}
-
-func request(method, uri string, body io.Reader) *Response {
-	req, _ := http.NewRequest(method, uri, body)
-	req.Header.Add("Authorization", "Basic YWRtaW46YWRtaW4=")
-	req.Header.Add("Content-Type", "application/json")
-	client := http.Client{}
-	res, err := client.Do(req)
-	return &Response{res, err}
 }

@@ -1,3 +1,5 @@
+//go:build unit
+
 package customMiddleware
 
 import (
@@ -28,7 +30,7 @@ func TestAuthentication(t *testing.T) {
 		assert.Nil(t, err)
 	})
 
-	t.Run("should return ", func(t *testing.T) {
+	t.Run("should return Unauthorized when username = admin & password = wrongpassword", func(t *testing.T) {
 		auth := "Basic" + " " + base64.StdEncoding.EncodeToString([]byte("admin:wrongpassword"))
 		req.Header.Set(echo.HeaderAuthorization, auth)
 		he := h(c).(*echo.HTTPError)
