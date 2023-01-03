@@ -5,6 +5,11 @@ package expense
 import (
 	"bytes"
 	"context"
+	"database/sql"
+	"encoding/json"
+	"fmt"
+	"io"
+	"io/ioutil"
 	"net"
 	"net/http"
 	"strconv"
@@ -15,10 +20,18 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+const (
+	host     = "pq_test"
+	port     = 5432
+	user     = "postgres"
+	password = "postgres"
+	dbName   = "go-postest-db"
+)
+
 func TestCreateExpenses(t *testing.T) {
 	eh := echo.New()
 	go func(e *echo.Echo) {
-		InitDb("postgres://pcfxcojb:klhxSm6mVTqPkH1OZB9GWSASMEkMguZG@tiny.db.elephantsql.com/pcfxcojb")
+		InitTestDb(t)
 
 		e.POST("/expenses", CreateExpenses)
 		e.Start(":2565")
@@ -65,7 +78,7 @@ func TestCreateExpenses(t *testing.T) {
 func TestGetExpensesById(t *testing.T) {
 	eh := echo.New()
 	go func(e *echo.Echo) {
-		InitDb("postgres://pcfxcojb:klhxSm6mVTqPkH1OZB9GWSASMEkMguZG@tiny.db.elephantsql.com/pcfxcojb")
+		InitTestDb(t)
 
 		e.GET("/expenses/:id", GetExpensesById)
 		e.POST("/expenses", CreateExpenses)
@@ -91,12 +104,10 @@ func TestGetExpensesById(t *testing.T) {
 			"tags": ["beverage"]
 		}`)
 		id := m.Id
-		t.Log(id)
 		ex := Expense{}
 
 		//action
 		res := request(http.MethodGet, "http://localhost:2565/expenses/"+strconv.Itoa(id), nil)
-		t.Log(res)
 		err := res.Decode(&ex)
 
 		//assert
@@ -135,7 +146,7 @@ func TestGetExpensesById(t *testing.T) {
 func TestUpdateExpensesById(t *testing.T) {
 	eh := echo.New()
 	go func(e *echo.Echo) {
-		InitDb("postgres://pcfxcojb:klhxSm6mVTqPkH1OZB9GWSASMEkMguZG@tiny.db.elephantsql.com/pcfxcojb")
+		InitTestDb(t)
 
 		e.PUT("/expenses/:id", UpdateExpensesById)
 		e.POST("/expenses", CreateExpenses)
@@ -187,7 +198,7 @@ func TestUpdateExpensesById(t *testing.T) {
 func TestGetExpenses(t *testing.T) {
 	eh := echo.New()
 	go func(e *echo.Echo) {
-		InitDb("postgres://pcfxcojb:klhxSm6mVTqPkH1OZB9GWSASMEkMguZG@tiny.db.elephantsql.com/pcfxcojb")
+		InitTestDb(t)
 
 		e.GET("/expenses", GetExpenses)
 		e.POST("/expenses", CreateExpenses)
@@ -223,4 +234,66 @@ func TestGetExpenses(t *testing.T) {
 	defer cancel()
 	err = eh.Shutdown(ctx)
 	assert.NoError(t, err)
+}
+
+func InitTestDb(t *testing.T) {
+	//connect to postgres db
+	var err error
+	connStr := fmt.Sprintf("host=%s user=%s password=%s port=%d dbname=%s sslmode=disable", host, user, password, port, dbName)
+	Db, err = sql.Open("postgres", connStr)
+	if err != nil {
+		t.Fatal(err)
+	}
+	createTb := `CREATE TABLE IF NOT EXISTS expenses(
+		id SERIAL PRIMARY KEY,
+		title TEXT,
+		AMOUNT FLOAT,
+		NOTE TEXT,
+		TAGS TEXT[])`
+
+	_, err = Db.Exec(createTb)
+
+	if err != nil {
+		t.Fatal("can not create table expense", err)
+	}
+	t.Log("successfully connect to db")
+}
+
+func SeedExpense(t *testing.T, body string) Expense {
+	reqBody := bytes.NewBufferString(body)
+
+	ex := Expense{}
+
+	res := request(http.MethodPost, "http://localhost:2565/expenses", reqBody)
+	err := res.Decode(&ex)
+
+	if err != nil {
+		t.Fatal("unaa\ble to seed demo data.", err.Error())
+	}
+	return ex
+}
+
+type Response struct {
+	*http.Response
+	err error
+}
+
+func (r *Response) Decode(v interface{}) error {
+	if r.err != nil {
+		return r.err
+	}
+	b, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(b, v)
+}
+
+func request(method, uri string, body io.Reader) *Response {
+	req, _ := http.NewRequest(method, uri, body)
+	req.Header.Add("Authorization", "Basic YWRtaW46YWRtaW4=")
+	req.Header.Add("Content-Type", "application/json")
+	client := http.Client{}
+	res, err := client.Do(req)
+	return &Response{res, err}
 }
