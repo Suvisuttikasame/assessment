@@ -2,7 +2,6 @@ package expense
 
 import (
 	"database/sql"
-	"fmt"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -21,7 +20,6 @@ func GetExpensesById(c echo.Context) error {
 	ex := Expense{}
 
 	err = row.Scan(&ex.Id, &ex.Title, &ex.Amount, &ex.Note, pq.Array(&ex.Tags))
-	fmt.Println(err)
 	switch err {
 	case sql.ErrNoRows:
 		return c.JSON(http.StatusNotFound, Err{Message: "expense's not found"})

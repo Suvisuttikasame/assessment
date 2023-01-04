@@ -1,10 +1,7 @@
 package expense
 
 import (
-	"fmt"
 	"net/http"
-
-	"github.com/lib/pq"
 
 	"github.com/labstack/echo/v4"
 )
@@ -24,8 +21,6 @@ func GetExpenses(c echo.Context) error {
 
 	for rows.Next() {
 		ex := Expense{}
-		err := rows.Scan(&ex.Id, &ex.Title, &ex.Amount, &ex.Note, pq.Array(&ex.Tags))
-		fmt.Println(err)
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, Err{Message: "unable to scan expense" + err.Error()})
 		}
