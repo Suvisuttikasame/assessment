@@ -2,6 +2,7 @@ package expense
 
 import (
 	"database/sql"
+	"fmt"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -30,6 +31,7 @@ func UpdateExpensesById(c echo.Context) error {
 
 	update := stmt.QueryRow(b.Title, b.Amount, b.Note, pq.Array(b.Tags), id)
 	err = update.Scan(&ex.Id, &ex.Title, &ex.Amount, &ex.Note, pq.Array(&ex.Tags))
+	fmt.Println(err)
 	switch err {
 	case sql.ErrNoRows:
 		return c.JSON(http.StatusNotFound, Err{Message: "updated expense's not found"})

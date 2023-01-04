@@ -11,7 +11,6 @@ import (
 
 func GetExpensesById(c echo.Context) error {
 	id := c.Param("id")
-	fmt.Println(id)
 
 	stmt, err := Db.Prepare(`SELECT * FROM expenses WHERE id = $1`)
 	if err != nil {
@@ -22,6 +21,7 @@ func GetExpensesById(c echo.Context) error {
 	ex := Expense{}
 
 	err = row.Scan(&ex.Id, &ex.Title, &ex.Amount, &ex.Note, pq.Array(&ex.Tags))
+	fmt.Println(err)
 	switch err {
 	case sql.ErrNoRows:
 		return c.JSON(http.StatusNotFound, Err{Message: "expense's not found"})
