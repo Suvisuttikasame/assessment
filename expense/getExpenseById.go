@@ -2,7 +2,6 @@ package expense
 
 import (
 	"database/sql"
-	"fmt"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -11,7 +10,6 @@ import (
 
 func GetExpensesById(c echo.Context) error {
 	id := c.Param("id")
-	fmt.Println(id)
 
 	stmt, err := Db.Prepare(`SELECT * FROM expenses WHERE id = $1`)
 	if err != nil {
